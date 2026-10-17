@@ -1,0 +1,45 @@
+# =============================================================================
+# .gitignore — Kit Hefesto "VPS administrado" (Coolify)
+#
+# Objetivo: que ningún secreto del servidor llegue a un repositorio.
+# Lo más importante de esta lista son los .env y los respaldos: un respaldo de
+# Coolify contiene /data/coolify/source/.env, que incluye el APP_KEY que cifra
+# las credenciales guardadas en la base.
+# =============================================================================
+
+# --- Secretos ---------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# --- Respaldos de Coolify (contienen APP_KEY y claves SSH) ------------------
+backups/
+*.dmp
+*.tar.gz
+*.tar
+*.bak
+COMPLETO
+MANIFESTO.txt
+SHA256SUMS
+
+# --- Datos del panel (por si alguien copia un /data/coolify al repositorio) --
+/data/
+coolify-data/
+source/
+.ssh/
+
+# --- Logs y salidas de los scripts ------------------------------------------
+*.log
+log/
+
+# --- Editores y sistema operativo --------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# --- Backups de editores de configuración ------------------------------------
+# Guárdalo si versionas tus cambios de iptables/ufw con algún gestor.

@@ -1,0 +1,36 @@
+# =============================================================================
+# coolify-backup.timer
+# Hefesto Studio — Kit "VPS administrado Hefesto" (Coolify)
+#
+# Dispara el respaldo diario. Complementa al respaldo propio de Coolify
+# (Settings > Backup), que solo guarda la base de datos: el respaldo del kit
+# además se lleva /data/coolify completo, incluido source/.env y ssh/keys.
+#
+# Horario elegido: 03:17 en hora local del servidor. Se usa una hora "rara" a
+# propósito, para no chocar con los respaldos de todos los demás servidores a
+# las 03:00.
+#
+# Ajusta la hora a tu zona horaria. Ejemplo para Santiago (UTC-3/-4):
+#   OnCalendar=*-*-* 03:17:00 America/Santiago
+#
+# INSTALACIÓN: ver config/coolify-backup.service (pasos 3 a 5).
+#
+# ESTADO: este archivo NO se ha instalado ni ejecutado en un servidor real.
+# =============================================================================
+
+[Unit]
+Description:Ejecuta el respaldo de Coolify todos los días
+Documentation=file:/opt/hefesto/coolify-vps-gestionado/README.md
+
+[Timer]
+# 03:17 hora del servidor, todos los días.
+OnCalendar=*-*-* 03:17:00
+
+# Si el servidor estaba apagado a esa hora, se hace apenas arranque.
+Persistent=true
+
+# Reparte la carga: espera hasta 15 minutos antes de salir.
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target

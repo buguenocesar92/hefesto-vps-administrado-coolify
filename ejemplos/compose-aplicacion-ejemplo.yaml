@@ -1,0 +1,85 @@
+# =============================================================================
+# compose-aplicacion-ejemplo.yaml
+# Hefesto Studio — Kit "VPS administrado Hefesto" (Coolify)
+#
+# -----------------------------------------------------------------------------
+# ESTO ES UN EJEMPLO DE DEMOSTRACIÓN. NO ES EL PANEL DE COOLIFY.
+# -----------------------------------------------------------------------------
+# El panel de Coolify NO se instala con un compose como este: se instala con el
+# script oficial (https://cdn.coollabs.io/coolify/install.sh), que crea sus
+# propios contenedores. Ver docs/02-INSTALACION-COOLIFY.md.
+#
+# Para qué sirve este archivo: mostrar cómo se ve una aplicación típica
+# desplegada como recurso "Docker Compose" DENTRO de Coolify, para que el
+# cliente entienda qué espera el panel de una app y qué queda en manos de Hefesto al
+# conectarla.
+#
+# Cómo usarlo (material de demostración, no probado en este entorno):
+#   1. En Coolify: New Resource > Docker Compose.
+#   2. Pega este YAML (quitando estas líneas de comentario).
+#   3. Define el dominio del recurso, p. ej. app.ejemplo.cl.
+#   4. El proxy de Coolify enruta por ese dominio y emite el certificado TLS.
+#   5. Coolify se conecta por SSH al servidor y prepara Docker automáticamente.
+#
+# Imagen: nginx 1.31.7-alpine (etiqueta consultada en Docker Hub el 2026-10-16,
+# digest del manifiesto sha256:892bb2152464f0c5d8972593a5f5afaf8054552580b699d95f8ff4af08c2d33d).
+# Ver VERSION.md.
+# =============================================================================
+
+services:
+  app-web:
+    image: nginx:1.31.7-alpine
+    container_name: hefesto-app-web
+    restart: unless-stopped
+
+    # Sin 'ports:' a propósito.
+    # Dentro de Coolify, el proxy del panel enruta por dominio y publica 80/443;
+    # publicar un puerto extra acá quedaría sin uso y abriría una vía
+    # innecesaria. Si vas a correr esto FUERA de Coolify, descomenta el bloque
+    # 'ports' del final y accede por http://<ip>:<puerto>.
+    expose:
+      - "80"
+
+    volumes:
+      # Volumen nombrado para todo lo que deba sobrevivir a un redeploy.
+      - contenido-web:/usr/share/nginx/html
+
+      # Montar archivos de configuración de ejemplo.
+      # - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+    environment:
+      # Ejemplo de configuración por ambiente. Sin secretos reales.
+      TZ: "${TZ:-America/Santiago}"
+
+    healthcheck:
+      # Healthcheck específico de nginx (no genérico): el propio binario valida
+      # la configuración y se comprueba que el puerto HTTP responda.
+      test: ["CMD-SHELL", "nginx -t && wget --spider -q http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # Sin límites de memoria/CPU: Coolify no los documenta para apps genéricas.
+    # Si el cliente necesita límites, se definen en el panel o con
+    # 'deploy.resources' de Compose, que sí es una decisión consciente.
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Si la app necesita cambiar el proxy (WebSockets, buffering, timeouts),
+    # en Coolify se configura en el dominio del recurso, no aquí.
+
+volumes:
+  contenido-web:
+    name: hefesto-app-web-contenido
+
+# ------------------------------------------------------------------
+# Solo si se usa FUERA de Coolify (docker compose up -d):
+# ------------------------------------------------------------------
+#   ports:
+#     - "8080:80"
+# ------------------------------------------------------------------

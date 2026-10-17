@@ -1,0 +1,54 @@
+# =============================================================================
+# coolify-backup.service
+# Hefesto Studio — Kit "VPS administrado Hefesto" (Coolify)
+#
+# Unidad systemd que ejecuta el respaldo completo del kit una vez al día.
+# No es de Coolify: es configuración de Hefesto para operar el VPS.
+#
+# IMPORTANTE: los respaldos contienen secretos (APP_KEY, claves SSH, .env).
+# El script deja cada carpeta en permisos restrictivos (700).
+#
+# INSTALACIÓN (como root, en el servidor):
+#   1. Copia el kit a /opt/hefesto/coolify-vps-gestionado
+#   2. cp config/coolify-backup.service /etc/systemd/system/
+#   3. cp config/coolify-backup.timer   /etc/systemd/system/
+#   4. systemctl daemon-reload
+#   5. systemctl enable --now coolify-backup.timer
+#   6. Verifica sin esperar:  systemctl start coolify-backup.service
+#      y luego               journalctl -u coolify-backup -n 50
+#
+# ESTADO: este archivo NO se ha instalado ni ejecutado en un servidor real.
+# =============================================================================
+
+[Unit]
+Description=Respaldo completo de la instancia Coolify (kit Hefesto)
+Documentation=file:/opt/hefesto/coolify-vps-gestionado/README.md
+# Requiere que Docker esté arriba; si el servidor acaba de arrancar, espera.
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+
+# Rutas: ajústalas si copiaste el kit a otro lugar.
+Environment=COOLIFY_DATA_DIR=/data/coolify
+Environment=BACKUP_ROOT=/data/backups/coolify
+
+ExecStart=/opt/hefesto/coolify-vps-gestionado/scripts/backup-coolify.sh
+
+# El script es de solo lectura sobre /data/coolify y escribe en BACKUP_ROOT.
+User=root
+Group=root
+
+# No vale la pena reiniciar el servicio si falla; se registrará la falla.
+Restart=no
+
+# Margen de seguridad para el respaldo (copia de /data + pg_dump).
+TimeoutStartSec=1800
+
+# Endurecimiento razonable para una tarea que habla con el socket de Docker.
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
